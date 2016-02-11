@@ -30,10 +30,6 @@
 @end
 
 
-@interface MADNotOpetWriteStreamException : NSException
-@end
-
-
 @interface MADSocketException : NSException
 @end
 

@@ -13,13 +13,12 @@
 
 @property (retain, nonatomic, readwrite) NSDictionary *responseLine;
 @property (retain, nonatomic, readwrite) NSDictionary *messageHeaders;
-@property (copy, nonatomic, readwrite) NSString *responseBody;
+@property (copy, nonatomic, readwrite) NSData *responseBody;
 
 + (NSDictionary *)sharedMIMETypes;
 
-- (NSData *)createResponseData:(MADRequest *)request;
+- (NSData *)transformRequestToResponse:(MADRequest *)request;
 - (NSString *)responseLineToString;
 - (NSString *)messageHeadersToString;
-
 
 @end

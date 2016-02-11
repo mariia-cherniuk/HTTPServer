@@ -13,6 +13,6 @@
 @property (retain, nonatomic, readwrite) NSDictionary *requestLine;
 @property (retain, nonatomic, readwrite) NSDictionary *messageHeaders;
 
-- (void)transformDataToRequest:(NSString *)data;
+- (instancetype)transformDataToRequest:(NSString *)data;
 
 @end

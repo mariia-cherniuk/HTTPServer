@@ -50,7 +50,7 @@
 }
 
 - (void)closeStream {
-    for (NSStream *stream in @[_readStream, _writeStream]) {
+    for (NSStream *stream in @[_writeStream, _readStream]) {
         [stream close];
         [stream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
     }
@@ -95,38 +95,35 @@
                     NSString *subStr = [_inputBuffer substringFromIndex:_inputBuffer.length - 4];
                 
                     if ([subStr isEqualToString:@"\r\n\r\n"]) {
-                        [_request transformDataToRequest:_inputBuffer];
+                        _request = [_request transformDataToRequest:_inputBuffer];
                         
-                        NSData *responseData = [_response createResponseData:_request];
+                        NSData *responseData = [_response transformRequestToResponse:_request];
                         const void *bytes = [responseData bytes];
                         
+                        NSLog(@"_writeStream.hasSpaceAvailable = %hhd", _writeStream.hasSpaceAvailable);
+                        
+                        NSLog(@"writeStream.streamStatus = %lu", (unsigned long)_writeStream.streamStatus);
+                        NSInteger res = [_writeStream write:bytes maxLength:responseData.length];
+                        NSLog(@"%ld", res);
+                        NSLog(@"_writeStream.streamStatus = %lu", (unsigned long)_writeStream.streamStatus);
+                        NSLog(@"_writeStream.streamError = %@", _writeStream.streamError);
                         NSLog(@"%@", [_response responseLineToString]);
-                        [_writeStream write:bytes maxLength:responseData.length];
+                        
+//                        UInt8 *buf = (UInt8 *)[responseData bytes];
+//                        CFIndex bufLen = (CFIndex)strlen((const char *)buf);
+//
+//                        CFIndex bytesWritten = CFWriteStreamWrite((CFWriteStreamRef)_writeStream, buf, (CFIndex)bufLen);
+//                        if (bytesWritten < 0) {
+//                            CFStreamError error = CFWriteStreamGetError((CFWriteStreamRef)_writeStream);
+//                        }
+
+
+                        [self.server cancelConnection:self];
                         _inputBuffer = nil;
                         _response = nil;
                         _request = nil;
-                        
-//                        if ([subStr isEqualToString:@"\r\n\r\n"]) {
-//                            [_request transformDataToRequest:_inputBuffer];
-//                            
-//                            [_response createResponseData:_request];
-//                            const void *bytes = (const void *)_response.responseBody.length;
-//                            //                        [_writeStream write:bytes maxLength:_response.responseBody.length];
-//                            [_writeStream write:bytes maxLength:responseData.length];
-//                            _inputBuffer = nil;
-//                            _response = nil;
-//                            _request = nil;
-//                        }
-
                     }
                 }
-                
-                
-//                if ([data isEqualToString:@"disconnect\r\n"]) {
-//                    [self.server cancelConnection:self];
-//                } else {
-//                    [_writeStream write:bytes maxLength:echoData.length];
-//                }
             } else {
                 printf("Failed reading data from stream.");
             }

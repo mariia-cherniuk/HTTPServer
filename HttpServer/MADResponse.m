@@ -54,13 +54,15 @@ static NSDictionary *mimeTypes = nil;
     [strResponse appendString:@"\n"];
     
     if (_messageHeaders != nil) {
+        [strResponse appendString:@"\n"];
         [_messageHeaders enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSDictionary *obj, BOOL *stop) {
             [strResponse appendString:[NSString stringWithFormat:@"%@: %@\n", key, obj]];
         }];
     }
     
     if (_responseBody != nil) {
-        [strResponse appendString:_responseBody];
+        [strResponse appendString:@"\n"];
+        [strResponse appendString:[[NSString alloc] initWithData:_responseBody encoding:NSUTF8StringEncoding]];
     }
     
     return strResponse;
@@ -92,16 +94,16 @@ static NSDictionary *mimeTypes = nil;
     return strResponse;
 }
 
-- (NSData *)createResponseData:(MADRequest *)request {
+- (NSData *)transformRequestToResponse:(MADRequest *)request {
     NSString* bundle = [[NSBundle mainBundle] resourcePath];
     NSString *filePath = [bundle stringByAppendingPathComponent:
                           [NSString stringWithFormat:@"/resource/%@", request.requestLine[@"URI"]]];
-//    NSString *uriComponent = [[[[request.requestLine[@"URI"] componentsSeparatedByString:@"/"] lastObject] componentsSeparatedByString:@"."] firstObject];
-//    NSString *filePath = [bundle stringByAppendingPathComponent:
-//                          [NSString stringWithFormat:@"/resource/%@", uriComponent]];
-
-    NSData *data = nil;
-    if (![request.requestLine[@"method"] isEqualToString:@"GET"]) {
+//    init _responseLine
+    if (request == nil) {
+        _responseLine = @{
+                        @"statusCode" : @"405 Method Not Allowed",
+                        };
+    } else if (![request.requestLine[@"method"] isEqualToString:@"GET"]) {
         _responseLine = @{
                         @"httpVersion" : request.requestLine[@"httpVersion"],
                         @"statusCode" : @"405 Method Not Allowed",
@@ -113,35 +115,43 @@ static NSDictionary *mimeTypes = nil;
                             @"statusCode" : @"404 Not Found",
                             };
         } else {
+            _responseBody = [NSData dataWithContentsOfFile:filePath];
             _responseLine = @{
                             @"httpVersion" : request.requestLine[@"httpVersion"],
                             @"statusCode" : @"200 OK",
                             };
-            data = [NSData dataWithContentsOfFile:filePath];
             
-            NSArray *filenameExtension = [request.requestLine[@"URI"] componentsSeparatedByString:@"."];
-            NSString *contentType = [MADResponse sharedMIMETypes][filenameExtension[1]];
-            
-            if (contentType == nil) {
-                contentType = @"application/octet-stream";
-            }
-            
-            NSDate *currentDate = [NSDate date];
-            NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-            
-            [dateFormatter setDateFormat:@"EEE, dd MMMM yyyy HH:mm:ss zzz"];
-            
-            _messageHeaders = @{
-                             @"Connection" : @"close",
-                             @"Content-Length" : [NSNumber numberWithUnsignedLong:[data length]],
-                             @"Content-Type" : contentType,
-                             @"Date" : [dateFormatter stringFromDate:currentDate],
-                             };
+            [self initMessageHeaders:request];
         }
-        _responseBody = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
-        NSLog(@"%@", [self responseToString]);
     }
-    return data;
+    
+    return _responseBody;
 }
+
+- (void)initMessageHeaders:(MADRequest *)request {
+//    create Content-Type
+    NSArray *filenameExtension = [request.requestLine[@"URI"] componentsSeparatedByString:@"."];
+    NSString *contentType = [MADResponse sharedMIMETypes][filenameExtension[1]];
+    
+    if (contentType == nil) {
+        contentType = @"application/octet-stream";
+    }
+    
+//    create Date
+    NSDate *currentDate = [NSDate date];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    
+    [dateFormatter setDateFormat:@"EEE, dd MMMM yyyy HH:mm:ss zzz"];
+    
+//     init messageHeaders
+    _messageHeaders = @{
+                        @"Connection" : @"close",
+                        @"Content-Length" : [NSNumber numberWithUnsignedLong:[_responseBody length]],
+                        @"Content-Type" : contentType,
+                        @"Date" : [dateFormatter stringFromDate:currentDate],
+                        };
+
+}
+
 
 @end

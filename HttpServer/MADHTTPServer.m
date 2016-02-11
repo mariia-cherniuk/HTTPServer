@@ -114,7 +114,7 @@ void AcceptCallBack(CFSocketRef socket, CFSocketCallBackType type, CFDataRef add
     if (read && write) {
         CFReadStreamSetProperty(read, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
         CFWriteStreamSetProperty(write, kCFStreamPropertyShouldCloseNativeSocket, kCFBooleanTrue);
-        
+
         NSOutputStream *writeStream = (__bridge NSOutputStream *) write;
         NSInputStream *readStream = (__bridge NSInputStream *) read;
         MADTCPConnection *connection = [[MADTCPConnection alloc] initWithReadStream:readStream
@@ -134,15 +134,6 @@ void AcceptCallBack(CFSocketRef socket, CFSocketCallBackType type, CFDataRef add
     }
 }
 
-//- (void)startResponse {
-//    CFHTTPMessageRef response = CFHTTPMessageCreateResponse(kCFAllocatorDefault, 200, NULL, kCFHTTPVersion1_1);
-//    CFHTTPMessageSetHeaderFieldValue(response, (CFStringRef)@"Content-Type", (CFStringRef)@"text/plain");
-//    CFHTTPMessageSetHeaderFieldValue(response, (CFStringRef)@"Connection", (CFStringRef)@"close");
-////    CFHTTPMessageSetHeaderFieldValue(response, (CFStringRef)@"Content-Length",
-////                                     (CFStringRef)[NSString stringWithFormat:@"%ld", [fileData length]]);
-//    CFDataRef headerData = CFHTTPMessageCopySerializedMessage(response);
-//}
-
 - (NSDictionary *)getHttpConfiguration {
     NSString *filepath = [[NSBundle mainBundle] pathForResource:@"http" ofType:@"conf"];
     NSError *error = nil;
@@ -157,7 +148,6 @@ void AcceptCallBack(CFSocketRef socket, CFSocketCallBackType type, CFDataRef add
     
     for (int i = 0; i < listArray.count; i++) {
         NSArray *subArray = [listArray[i] componentsSeparatedByString:@" "];
-        NSLog(@"%@", subArray);
         [httpConf setValue:subArray[1] forKey:subArray[0]];
     }
     
@@ -168,10 +158,6 @@ void AcceptCallBack(CFSocketRef socket, CFSocketCallBackType type, CFDataRef add
 
 
 @implementation MADInvalidPortException
-@end
-
-
-@implementation MADNotOpetWriteStreamException
 @end
 
 
