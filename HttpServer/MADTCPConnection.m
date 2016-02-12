@@ -110,17 +110,13 @@
             printf("The open inputStream has completed successfully.\n");
         }
     } else if (eventCode == NSStreamEventHasBytesAvailable) {
-        if (aStream == _readStream) {
+        if (aStream == _readStream) {            
             uint8_t buf[BUFSIZ];
             NSInteger len = [_readStream read:buf maxLength:BUFSIZ];
             
             if(len > 0) {
                 NSData *data = [[NSData alloc] initWithBytes:buf length:len];
-
                 [_inputBuffer appendString:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
-                if ([_inputBuffer isEqualToString:[NSString stringWithFormat:@"%d", SIGINT]]) {
-                    [self.server cancelConnection:self];
-                }
                 
                 if (_inputBuffer.length >= 4) {
                     if ([[_inputBuffer substringFromIndex:_inputBuffer.length - 4] isEqualToString:@"\r\n\r\n"]) {
@@ -138,7 +134,7 @@
         }
     } else if (eventCode == NSStreamEventHasSpaceAvailable) {
         if (aStream == _writeStream) {
-            NSLog(@"The stream can accept bytes for writing.");
+//            NSLog(@"The stream can accept bytes for writing.");
             if (_responseData != nil || _response.responseError == YES) {
                 if (self.headerSent == NO) {
                     [self sendResposeData];

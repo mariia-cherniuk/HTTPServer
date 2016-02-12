@@ -11,13 +11,23 @@
 #import <CoreFoundation/CoreFoundation.h>
 #import <sys/socket.h>
 #import <netinet/in.h>
+#import <stdlib.h>
 #define MAX_PORT 65535
 #define MIN_PORT 0
+
+#define GWS_DCHECK(__CONDITION__) \
+do { \
+if (!(__CONDITION__)) {\
+exit(EXIT_SUCCESS); \
+} \
+} while (0)
+
+static BOOL _running;
 
 @interface MADHTTPServer ()
 
 @property (assign, nonatomic, readonly) CFSocketRef ipv4Socket;
-@property (retain, nonatomic) NSMutableSet *connections;
+@property (retain, nonatomic, readwrite) NSMutableSet *connections;
 
 - (void) acceptConnection:(CFSocketNativeHandle)handle;
 
@@ -29,6 +39,21 @@ void AcceptCallBack(CFSocketRef socket, CFSocketCallBackType type, CFDataRef add
     CFSocketNativeHandle handle = *(CFSocketNativeHandle *)data;
     
     [server acceptConnection:handle];
+}
+
+static void _SignalHandler(int signal) {
+    _running = NO;
+    if (signal == SIGINT) {
+        printf("Goodbye, cruel world.\n");
+        return;
+    }
+}
+
+static void _ExecuteMainThreadRunLoopSources() {
+    SInt32 result;
+    do {
+        result = CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.0, true);
+    } while (result == kCFRunLoopRunHandledSource);
 }
 
 @implementation MADHTTPServer
@@ -45,24 +70,41 @@ void AcceptCallBack(CFSocketRef socket, CFSocketCallBackType type, CFDataRef add
         _ipv4Socket = nil;
         _host = host;
         _port = port;
-        _running = NO;
         _connections = [NSMutableSet new];
     }
     
     return self;
 }
 
+- (void)run {
+    GWS_DCHECK([NSThread isMainThread]);
+     _running = YES;
+    void (*termHandler)(int) = signal(SIGTERM, _SignalHandler);
+    void (*intHandler)(int) = signal(SIGINT, _SignalHandler);
+    
+    if ((termHandler != SIG_ERR) && (intHandler != SIG_ERR)) {
+            while (_running) {
+                CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1.0, true);
+            }
+        [self stop];
+
+        _ExecuteMainThreadRunLoopSources();
+        signal(SIGINT, intHandler);
+        signal(SIGTERM, termHandler);
+    }
+}
+
 - (void)start {
     [self openSocket];
     [self listen];
-    _running = YES;
+    [self run];
 }
 
 - (void)stop {
     CFSocketInvalidate(_ipv4Socket);
     CFRelease(_ipv4Socket);
-    _running = NO;
     _ipv4Socket = nil;
+    CFRunLoopStop(CFRunLoopGetCurrent());
 }
 
 - (void)cancelConnection:(MADTCPConnection *)connection {
@@ -71,8 +113,8 @@ void AcceptCallBack(CFSocketRef socket, CFSocketCallBackType type, CFDataRef add
 }
 
 - (void)openSocket {
-//    Create a Socket(TCP IPv4)
     CFSocketContext socketContext = { 0, (__bridge void *)(self), NULL, NULL, NULL };
+    
     _ipv4Socket = CFSocketCreate(kCFAllocatorDefault, PF_INET, SOCK_STREAM, IPPROTO_TCP, kCFSocketAcceptCallBack, &AcceptCallBack, &socketContext);
     
     if (!_ipv4Socket) {
@@ -80,7 +122,7 @@ void AcceptCallBack(CFSocketRef socket, CFSocketCallBackType type, CFDataRef add
                                                   reason:@"Unable to create socket."
                                                 userInfo:nil];
     }
-//    встановлюю порт і адресу, які збираюсь слухати
+
     struct sockaddr_in socketAddress;
     memset(&socketAddress, 0, sizeof(socketAddress));
     socketAddress.sin_len = sizeof(socketAddress);

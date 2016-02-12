@@ -84,7 +84,8 @@ static NSDictionary *mimeTypes = nil;
     NSString* bundle = [[NSBundle mainBundle] resourcePath];
     NSString *filePath = [bundle stringByAppendingPathComponent:
                           [NSString stringWithFormat:@"/resource/%@", request.requestLine[@"URI"]]];
-//    init _responseLine
+
+    //    init _responseLine
     if (request == nil) {
         _responseLine = @{
                         @"statusCode" : @"405 Method Not Allowed",

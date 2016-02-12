@@ -11,14 +11,18 @@
 
 int main(int argc, const char * argv[]) {
     @autoreleasepool {
+//        dispatch_source_t sigHandler = dispatch_source_create(DISPATCH_SOURCE_TYPE_SIGNAL, SIGKILL, 0, dispatch_get_main_queue());
+//        dispatch_source_set_event_handler(sigHandler, ^{
+//            CFRunLoopStop(CFRunLoopGetMain());
+//        });
+//        dispatch_resume(sigHandler);
+//        
+
         NSDictionary *httpConf = [[[MADHTTPServer alloc] init] getHttpConfiguration];
         MADHTTPServer *server = [[MADHTTPServer alloc] initWithHost:httpConf[@"address"] port:[httpConf[@"port"] integerValue]];
         
-        NSLog(@"%hhu", server.isRunning);
-        [server start];
-        NSLog(@"%hhu", server.isRunning);
-        
-        [[NSRunLoop currentRunLoop] run];
+        NSLog(@"server start");
+        [server start];        
     }
     
     return 0;

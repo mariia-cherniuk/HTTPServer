@@ -13,7 +13,6 @@
 
 @property (copy, nonatomic, readwrite) NSString *host;
 @property (assign, nonatomic, readwrite) NSInteger port;
-@property (assign, nonatomic, readonly, getter = isRunning) BOOL running;
 
 - (instancetype)initWithHost:(NSString *)host port:(NSInteger)port;
 
