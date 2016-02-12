@@ -20,7 +20,8 @@
 - (instancetype)initWithReadStream:(NSInputStream *)readStream
                        writeStream:(NSOutputStream *)writeStream;
 
-- (void)openConnection;
-- (void)closeStream;
+- (void)openReadStream;
+- (void)openWriteStream;
+- (void)closeStreams;
 
 @end

@@ -42,32 +42,6 @@ static NSDictionary *mimeTypes = nil;
     return self;
 }
 
-- (NSString *)responseToString {
-    NSMutableString *strResponse = [[NSMutableString alloc] init];
-    
-    if (_responseLine.count == 2) {
-        [strResponse appendString:[NSString stringWithFormat:
-                                   @"%@ %@", _responseLine[@"httpVersion"], _responseLine[@"statusCode"]]];
-    } else if (_responseLine.count == 1) {
-        [strResponse appendString:[NSString stringWithFormat:@"%@", _responseLine[@"statusCode"]]];
-    }
-    [strResponse appendString:@"\n"];
-    
-    if (_messageHeaders != nil) {
-        [strResponse appendString:@"\n"];
-        [_messageHeaders enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSDictionary *obj, BOOL *stop) {
-            [strResponse appendString:[NSString stringWithFormat:@"%@: %@\n", key, obj]];
-        }];
-    }
-    
-    if (_responseBody != nil) {
-        [strResponse appendString:@"\n"];
-        [strResponse appendString:[[NSString alloc] initWithData:_responseBody encoding:NSUTF8StringEncoding]];
-    }
-    
-    return strResponse;
-}
-
 - (NSString *)responseLineToString {
     NSMutableString *strResponse = [[NSMutableString alloc] init];
     
@@ -77,7 +51,7 @@ static NSDictionary *mimeTypes = nil;
     } else if (_responseLine.count == 1) {
         [strResponse appendString:[NSString stringWithFormat:@"%@", _responseLine[@"statusCode"]]];
     }
-    [strResponse appendString:@"\n"];
+    [strResponse appendString:@"\r\n"];
     
     return strResponse;
 }
@@ -87,11 +61,22 @@ static NSDictionary *mimeTypes = nil;
 
     if (_messageHeaders != nil) {
         [_messageHeaders enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSDictionary *obj, BOOL *stop) {
-            [strResponse appendString:[NSString stringWithFormat:@"%@: %@\n", key, obj]];
+            [strResponse appendString:[NSString stringWithFormat:@"%@: %@\r\n", key, obj]];
         }];
+        [strResponse appendString:@"\r\n"];
     }
     
     return strResponse;
+}
+
+- (NSData *)headerData {
+    NSMutableData *responseData = [NSMutableData dataWithData:[[self responseLineToString] dataUsingEncoding:NSASCIIStringEncoding]];
+    
+    if (_messageHeaders != nil) {
+        [responseData appendData:[[self messageHeadersToString] dataUsingEncoding:NSASCIIStringEncoding]];
+    }
+
+    return responseData;
 }
 
 - (NSData *)transformRequestToResponse:(MADRequest *)request {
@@ -125,7 +110,7 @@ static NSDictionary *mimeTypes = nil;
         }
     }
     
-    return _responseBody;
+    return [self headerData];
 }
 
 - (void)initMessageHeaders:(MADRequest *)request {
@@ -140,13 +125,13 @@ static NSDictionary *mimeTypes = nil;
 //    create Date
     NSDate *currentDate = [NSDate date];
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    
+    dateFormatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"US"];
     [dateFormatter setDateFormat:@"EEE, dd MMMM yyyy HH:mm:ss zzz"];
     
 //     init messageHeaders
     _messageHeaders = @{
                         @"Connection" : @"close",
-                        @"Content-Length" : [NSNumber numberWithUnsignedLong:[_responseBody length]],
+                        @"Content-Length" : @([_responseBody length]),
                         @"Content-Type" : contentType,
                         @"Date" : [dateFormatter stringFromDate:currentDate],
                         };

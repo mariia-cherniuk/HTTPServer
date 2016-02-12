@@ -21,24 +21,21 @@
     return self;
 }
 
-- (instancetype)transformDataToRequest:(NSString *)data {
-    NSArray *component = [data componentsSeparatedByString:@"\r\n"];
-    
-    self = [self transformRequestLine:data component:component];
-    if (!self) {
-        self = [self transformMessageHeaders:component];
+- (BOOL)parseRequestString:(NSString *)data {
+    NSArray *components = [data componentsSeparatedByString:@"\r\n"];
+    if (![self parseRequestLineWithComponents:components]) {
+        return NO;
     }
-
-    return self;
+    return [self parseMessageHeaders:components];
 }
 
-- (instancetype)transformRequestLine:(NSString *)data component:(NSArray *)component {
-    NSMutableArray *requestLineArr = (NSMutableArray *)[component[0] componentsSeparatedByString:@" "];
+- (BOOL)parseRequestLineWithComponents:(NSArray *)components {
+    NSMutableArray *requestLineArr = (NSMutableArray *)[components[0] componentsSeparatedByString:@" "];
     
     if (requestLineArr.count != 3) {
-        return nil;
+        return NO;
     }
-    requestLineArr[1] = [self transformURI:requestLineArr];
+    requestLineArr[1] = [self parseURI:requestLineArr];
     
     _requestLine = @{
                      @"method" : requestLineArr[0],
@@ -46,10 +43,10 @@
                      @"httpVersion" : requestLineArr[2],
                      };
     
-    return self;
+    return YES;
 }
 
-- (NSString *)transformURI:(NSMutableArray *)requestLineArr {
+- (NSString *)parseURI:(NSMutableArray *)requestLineArr {
 //   if the last character '/'
     if ([[requestLineArr[1] substringFromIndex:[requestLineArr[1] length] - 1] isEqualToString:@"/"]) {
         NSMutableString *uri = [NSMutableString stringWithString:requestLineArr[1]];
@@ -72,7 +69,7 @@
     return requestLineArr[1];
 }
 
-- (instancetype)transformMessageHeaders:(NSArray *)component {
+- (BOOL)parseMessageHeaders:(NSArray *)component {
     NSMutableDictionary *messageHeadersDic = [NSMutableDictionary new];
     
     for (NSInteger i = 1; i < component.count; i++) {
@@ -84,7 +81,7 @@
                 NSString *value = [component[i] substringFromIndex:range.location + 1];
                 messageHeadersDic[key] = value;
             } else {
-                return nil;
+                return NO;
             }
         }
     }
@@ -93,11 +90,27 @@
         _messageHeaders = messageHeadersDic;
     }
     
-    return self;
+    return YES;
+}
+
+- (NSString *)requestToString {
+    NSMutableString *strRequest = [[NSMutableString alloc] init];
+    
+    [strRequest appendFormat:@"%@ %@ %@\n", _requestLine[@"method"], _requestLine[@"URI"], _requestLine[@"httpVersion"]];
+    
+    if (_messageHeaders != nil) {
+        [strRequest appendString:@"/n"];
+        [_messageHeaders enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSDictionary *obj, BOOL *stop) {
+            [strRequest appendString:[NSString stringWithFormat:@"%@: %@\n", key, obj]];
+        }];
+    }
+    
+    return strRequest;
 }
 
 - (NSString *)description {
-    return [[super description] stringByAppendingString:[NSString stringWithFormat:@"%@ %@", _requestLine, _messageHeaders]];
+    return [[super description] stringByAppendingString:[NSString stringWithFormat:
+                                                         @"%@", [self requestToString]]];
 }
 
 @end

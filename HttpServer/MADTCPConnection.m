@@ -14,8 +14,10 @@
 
 @property (retain, nonatomic, readonly) MADRequest *request;
 @property (retain, nonatomic, readonly) MADResponse *response;
-
 @property (retain, nonatomic, readwrite) NSMutableString *inputBuffer;
+@property (retain, nonatomic, readwrite) NSData *responseData;
+@property (assign, nonatomic, readwrite) NSInteger byteIndex;
+@property (assign, nonatomic) BOOL headerSent;
 
 @end
 
@@ -33,41 +35,71 @@
     if (self) {
         _readStream = readStream;
         _writeStream = writeStream;
-        _request = [[MADRequest alloc] init];;
-        _response = [[MADResponse alloc] init];;
+        _request = [[MADRequest alloc] init];
+        _response = [[MADResponse alloc] init];
         _inputBuffer = [[NSMutableString alloc] init];
+        _responseData = nil;
+        _byteIndex = 0;
     }
     
     return self;
 }
 
-- (void)openConnection {
-    for (NSStream *stream in @[_readStream, _writeStream]) {
-        stream.delegate = self;
-        [stream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-        [stream open];
+- (void)openReadStream {
+    if (_readStream.streamStatus != NSStreamStatusOpening || _readStream.streamStatus != NSStreamStatusOpen) {
+        _readStream.delegate = self;
+        [_readStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+        [_readStream open];
     }
 }
 
-- (void)closeStream {
+- (void)openWriteStream {
+    if (_writeStream.streamStatus != NSStreamStatusOpening || _writeStream.streamStatus != NSStreamStatusOpen) {
+        _writeStream.delegate = self;
+        [_writeStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+        [_writeStream open];
+    }
+}
+
+- (void)closeStreams {
     for (NSStream *stream in @[_writeStream, _readStream]) {
-        [stream close];
-        [stream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+        if (stream.streamStatus != NSStreamStatusClosed) {
+            [stream close];
+            [stream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+        }
     }
     _readStream = nil;
     _writeStream = nil;
 }
 
 - (void)closeReadStream {
-    [_readStream close];
-    [_readStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    _readStream = nil;
+    if (_readStream.streamStatus != NSStreamStatusClosed) {
+        [_readStream close];
+        [_readStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+        _readStream = nil;
+    }
 }
 
 - (void)closeWriteStream {
-    [_writeStream close];
-    [_writeStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    _writeStream = nil;
+    if (_writeStream.streamStatus != NSStreamStatusClosed) {
+        [_writeStream close];
+        [_writeStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
+        _writeStream = nil;
+    }
+}
+
+- (void)sendResposeData {
+    uint8_t *readBytes = (uint8_t *)[_responseData bytes];
+    
+    readBytes += _byteIndex;
+    
+    NSInteger data_len = [_responseData length];
+    NSInteger len = ((data_len - _byteIndex >= 1024) ? 1024 : (data_len - _byteIndex));
+    uint8_t buf[len];
+    
+    (void)memcpy(buf, readBytes, len);
+    len = [_writeStream write:(const uint8_t *)buf maxLength:len];
+    _byteIndex += len;
 }
 
 #pragma mark - NSStreamDelegate
@@ -89,39 +121,16 @@
 
                 [_inputBuffer appendString:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
                 
-                if ([_inputBuffer isEqualToString:@"disconnect\r\n"]) {
-                    [self.server cancelConnection:self];
-                } else if (_inputBuffer.length >= 4) {
+                if (_inputBuffer.length >= 4) {
                     NSString *subStr = [_inputBuffer substringFromIndex:_inputBuffer.length - 4];
                 
                     if ([subStr isEqualToString:@"\r\n\r\n"]) {
-                        _request = [_request transformDataToRequest:_inputBuffer];
-                        
-                        NSData *responseData = [_response transformRequestToResponse:_request];
-                        const void *bytes = [responseData bytes];
-                        
-                        NSLog(@"_writeStream.hasSpaceAvailable = %hhd", _writeStream.hasSpaceAvailable);
-                        
-                        NSLog(@"writeStream.streamStatus = %lu", (unsigned long)_writeStream.streamStatus);
-                        NSInteger res = [_writeStream write:bytes maxLength:responseData.length];
-                        NSLog(@"%ld", res);
-                        NSLog(@"_writeStream.streamStatus = %lu", (unsigned long)_writeStream.streamStatus);
-                        NSLog(@"_writeStream.streamError = %@", _writeStream.streamError);
-                        NSLog(@"%@", [_response responseLineToString]);
-                        
-//                        UInt8 *buf = (UInt8 *)[responseData bytes];
-//                        CFIndex bufLen = (CFIndex)strlen((const char *)buf);
-//
-//                        CFIndex bytesWritten = CFWriteStreamWrite((CFWriteStreamRef)_writeStream, buf, (CFIndex)bufLen);
-//                        if (bytesWritten < 0) {
-//                            CFStreamError error = CFWriteStreamGetError((CFWriteStreamRef)_writeStream);
-//                        }
-
-
-                        [self.server cancelConnection:self];
-                        _inputBuffer = nil;
-                        _response = nil;
-                        _request = nil;
+                        if ([_request parseRequestString:_inputBuffer]) {
+                            self.responseData = [_response transformRequestToResponse:_request];
+                        } else {
+                            self.responseData = [_response transformRequestToResponse:nil];
+                        }
+                        [self openWriteStream];
                     }
                 }
             } else {
@@ -131,6 +140,20 @@
     } else if (eventCode == NSStreamEventHasSpaceAvailable) {
         if (aStream == _writeStream) {
             NSLog(@"The stream can accept bytes for writing.");
+            if (_responseData != nil) {
+                if (self.headerSent == NO) {
+                    [self sendResposeData];
+                    if (_byteIndex >= _responseData.length) {
+                        _byteIndex = 0;
+                        self.headerSent = YES;
+                        self.responseData = _response.responseBody;
+                    }
+                } else if (self.headerSent == YES && _byteIndex < _responseData.length) {
+                    [self sendResposeData];
+                } else {
+                    [self.server cancelConnection:self];
+                }
+            }
         } else {
             printf("Failed writing data to stream.");
         }

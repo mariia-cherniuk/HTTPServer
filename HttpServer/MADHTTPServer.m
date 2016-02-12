@@ -66,7 +66,7 @@ void AcceptCallBack(CFSocketRef socket, CFSocketCallBackType type, CFDataRef add
 }
 
 - (void)cancelConnection:(MADTCPConnection *)connection {
-    [connection closeStream];
+    [connection closeStreams];
     [_connections removeObject:connection];
 }
 
@@ -120,7 +120,7 @@ void AcceptCallBack(CFSocketRef socket, CFSocketCallBackType type, CFDataRef add
         MADTCPConnection *connection = [[MADTCPConnection alloc] initWithReadStream:readStream
                                                                         writeStream:writeStream];
         connection.server = self;
-        [connection openConnection];
+        [connection openReadStream];
         [_connections addObject:connection];
     } else {
         close(handle);
