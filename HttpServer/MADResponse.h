@@ -13,7 +13,8 @@
 
 @property (retain, nonatomic, readwrite) NSDictionary *responseLine;
 @property (retain, nonatomic, readwrite) NSDictionary *messageHeaders;
-@property (copy, nonatomic, readwrite) NSData *responseBody;
+@property (retain, nonatomic, readwrite) NSData *responseBody;
+@property (assign, nonatomic, readwrite) BOOL responseError;
 
 + (NSDictionary *)sharedMIMETypes;
 

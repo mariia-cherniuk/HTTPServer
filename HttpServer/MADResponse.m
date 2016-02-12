@@ -37,6 +37,7 @@ static NSDictionary *mimeTypes = nil;
         _responseLine = nil;
         _messageHeaders = nil;
         _responseBody = nil;
+        _responseError = NO;
     }
     
     return self;
@@ -88,17 +89,20 @@ static NSDictionary *mimeTypes = nil;
         _responseLine = @{
                         @"statusCode" : @"405 Method Not Allowed",
                         };
+        _responseError = YES;
     } else if (![request.requestLine[@"method"] isEqualToString:@"GET"]) {
         _responseLine = @{
                         @"httpVersion" : request.requestLine[@"httpVersion"],
                         @"statusCode" : @"405 Method Not Allowed",
                         };
+        _responseError = YES;
     } else if ([request.requestLine[@"method"] isEqualToString:@"GET"]) {
         if (![[NSFileManager defaultManager] fileExistsAtPath:filePath]) {
             _responseLine = @{
                             @"httpVersion" : request.requestLine[@"httpVersion"],
                             @"statusCode" : @"404 Not Found",
                             };
+            _responseError = YES;
         } else {
             _responseBody = [NSData dataWithContentsOfFile:filePath];
             _responseLine = @{

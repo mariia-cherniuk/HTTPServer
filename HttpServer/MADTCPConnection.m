@@ -17,7 +17,7 @@
 @property (retain, nonatomic, readwrite) NSMutableString *inputBuffer;
 @property (retain, nonatomic, readwrite) NSData *responseData;
 @property (assign, nonatomic, readwrite) NSInteger byteIndex;
-@property (assign, nonatomic) BOOL headerSent;
+@property (assign, nonatomic, readwrite) BOOL headerSent;
 
 @end
 
@@ -38,8 +38,6 @@
         _request = [[MADRequest alloc] init];
         _response = [[MADResponse alloc] init];
         _inputBuffer = [[NSMutableString alloc] init];
-        _responseData = nil;
-        _byteIndex = 0;
     }
     
     return self;
@@ -120,11 +118,12 @@
                 NSData *data = [[NSData alloc] initWithBytes:buf length:len];
 
                 [_inputBuffer appendString:[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]];
+                if ([_inputBuffer isEqualToString:[NSString stringWithFormat:@"%d", SIGINT]]) {
+                    [self.server cancelConnection:self];
+                }
                 
                 if (_inputBuffer.length >= 4) {
-                    NSString *subStr = [_inputBuffer substringFromIndex:_inputBuffer.length - 4];
-                
-                    if ([subStr isEqualToString:@"\r\n\r\n"]) {
+                    if ([[_inputBuffer substringFromIndex:_inputBuffer.length - 4] isEqualToString:@"\r\n\r\n"]) {
                         if ([_request parseRequestString:_inputBuffer]) {
                             self.responseData = [_response transformRequestToResponse:_request];
                         } else {
@@ -140,7 +139,7 @@
     } else if (eventCode == NSStreamEventHasSpaceAvailable) {
         if (aStream == _writeStream) {
             NSLog(@"The stream can accept bytes for writing.");
-            if (_responseData != nil) {
+            if (_responseData != nil || _response.responseError == YES) {
                 if (self.headerSent == NO) {
                     [self sendResposeData];
                     if (_byteIndex >= _responseData.length) {

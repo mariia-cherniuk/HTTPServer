@@ -35,7 +35,13 @@
     if (requestLineArr.count != 3) {
         return NO;
     }
+    if ( ![requestLineArr[requestLineArr.count - 1] isEqualToString:@"HTTP/1.1"]) {
+        return NO;
+    }
     requestLineArr[1] = [self parseURI:requestLineArr];
+    if (![[requestLineArr[1] substringToIndex:1] isEqualToString:@"/"]) {
+        return NO;
+    }
     
     _requestLine = @{
                      @"method" : requestLineArr[0],
@@ -47,22 +53,17 @@
 }
 
 - (NSString *)parseURI:(NSMutableArray *)requestLineArr {
-//   if the last character '/'
-    if ([[requestLineArr[1] substringFromIndex:[requestLineArr[1] length] - 1] isEqualToString:@"/"]) {
+//   if the last character is '/'
+    if (([requestLineArr[1] length] != 0) && [[requestLineArr[1] substringFromIndex:[requestLineArr[1] length] - 1] isEqualToString:@"/"]) {
         NSMutableString *uri = [NSMutableString stringWithString:requestLineArr[1]];
         [uri appendString:@"index.html"];
         [requestLineArr replaceObjectAtIndex:1 withObject:uri];
     }
+    
 //    if the URI has '?'
     NSRange range1 = [requestLineArr[1] rangeOfString:@"?"];
     if (range1.location != NSNotFound) {
         NSString *uri = [requestLineArr[1] substringToIndex:range1.location];
-        [requestLineArr replaceObjectAtIndex:1 withObject:uri];
-    }
-//    get search fileName
-    NSRange range2 = [requestLineArr[1] rangeOfString:@"/" options:NSBackwardsSearch];
-    if (range2.location != NSNotFound) {
-        NSString *uri = [requestLineArr[1] substringFromIndex:range2.location];
         [requestLineArr replaceObjectAtIndex:1 withObject:uri];
     }
     
