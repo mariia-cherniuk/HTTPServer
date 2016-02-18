@@ -105,9 +105,9 @@
 - (void)stream:(NSStream *)aStream handleEvent:(NSStreamEvent)eventCode {
     if (eventCode == NSStreamEventOpenCompleted) {
         if ([aStream isKindOfClass:[NSOutputStream class]]) {
-            printf("The open outputStream has completed successfully.\n");
+//            printf("The open outputStream has completed successfully.\n");
         } else {
-            printf("The open inputStream has completed successfully.\n");
+//            printf("The open inputStream has completed successfully.\n");
         }
     } else if (eventCode == NSStreamEventHasBytesAvailable) {
         if (aStream == _readStream) {            
@@ -146,6 +146,7 @@
                 } else if (self.headerSent == YES && _byteIndex < _responseData.length) {
                     [self sendResposeData];
                 } else {
+                    NSLog(@"%@ %@", [_response.responseLine[@"statusCode"] componentsSeparatedByString:@" "][0], _request.requestLine[@"URI"]);
                     [self.server cancelConnection:self];
                 }
             }

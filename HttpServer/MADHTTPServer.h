@@ -14,13 +14,14 @@
 @property (copy, nonatomic, readwrite) NSString *host;
 @property (assign, nonatomic, readwrite) NSInteger port;
 
++ (NSDictionary *)getHttpConfiguration;
+
 - (instancetype)initWithHost:(NSString *)host port:(NSInteger)port;
 
 - (void)start;
 - (void)stop;
 
 - (void)cancelConnection:(MADTCPConnection *)connection;
-- (NSDictionary *)getHttpConfiguration;
 
 @end
 

@@ -58,6 +58,26 @@ static void _ExecuteMainThreadRunLoopSources() {
 
 @implementation MADHTTPServer
 
++ (NSDictionary *)getHttpConfiguration {
+    NSString *filepath = [[NSBundle mainBundle] pathForResource:@"http" ofType:@"conf"];
+    NSError *error = nil;
+    NSString *fileContents = [NSString stringWithContentsOfFile:filepath encoding:NSUTF8StringEncoding error:&error];
+    
+    if (error) {
+        NSLog(@"Error reading file: %@", error.localizedDescription);
+    }
+    
+    NSArray *listArray = [fileContents componentsSeparatedByString:@"\n"];
+    NSMutableDictionary *httpConf = [NSMutableDictionary new];
+    
+    for (int i = 0; i < listArray.count; i++) {
+        NSArray *subArray = [listArray[i] componentsSeparatedByString:@" "];
+        [httpConf setValue:subArray[1] forKey:subArray[0]];
+    }
+    
+    return httpConf;
+}
+
 - (instancetype)initWithHost:(NSString *)host port:(NSInteger)port {
     self = [super init];
     
@@ -174,26 +194,6 @@ static void _ExecuteMainThreadRunLoopSources() {
     if (write) {
         CFRelease(write);
     }
-}
-
-- (NSDictionary *)getHttpConfiguration {
-    NSString *filepath = [[NSBundle mainBundle] pathForResource:@"http" ofType:@"conf"];
-    NSError *error = nil;
-    NSString *fileContents = [NSString stringWithContentsOfFile:filepath encoding:NSUTF8StringEncoding error:&error];
-    
-    if (error) {
-        NSLog(@"Error reading file: %@", error.localizedDescription);
-    }
-    
-    NSArray *listArray = [fileContents componentsSeparatedByString:@"\n"];
-    NSMutableDictionary *httpConf = [NSMutableDictionary new];
-    
-    for (int i = 0; i < listArray.count; i++) {
-        NSArray *subArray = [listArray[i] componentsSeparatedByString:@" "];
-        [httpConf setValue:subArray[1] forKey:subArray[0]];
-    }
-    
-    return httpConf;
 }
 
 @end

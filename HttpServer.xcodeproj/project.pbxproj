@@ -10,7 +10,6 @@
 		841BEEC21C68A40E001B28FD /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 841BEEC11C68A40E001B28FD /* main.m */; };
 		841BEECF1C68D4C5001B28FD /* MADHTTPServer.m in Sources */ = {isa = PBXBuildFile; fileRef = 841BEECC1C68D4C5001B28FD /* MADHTTPServer.m */; };
 		841BEED01C68D4C5001B28FD /* MADTCPConnection.m in Sources */ = {isa = PBXBuildFile; fileRef = 841BEECE1C68D4C5001B28FD /* MADTCPConnection.m */; };
-		8449AFC31C6E3C25001B37E7 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 8449AFC21C6E3C25001B37E7 /* libz.tbd */; };
 		844FFCA41C69165C0057C008 /* MADRequest.m in Sources */ = {isa = PBXBuildFile; fileRef = 844FFCA31C69165C0057C008 /* MADRequest.m */; };
 		844FFCA71C69E2A60057C008 /* MADResponse.m in Sources */ = {isa = PBXBuildFile; fileRef = 844FFCA61C69E2A60057C008 /* MADResponse.m */; };
 /* End PBXBuildFile section */
@@ -34,29 +33,16 @@
 		841BEECC1C68D4C5001B28FD /* MADHTTPServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MADHTTPServer.m; sourceTree = "<group>"; };
 		841BEECD1C68D4C5001B28FD /* MADTCPConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MADTCPConnection.h; sourceTree = "<group>"; };
 		841BEECE1C68D4C5001B28FD /* MADTCPConnection.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MADTCPConnection.m; sourceTree = "<group>"; };
-		8449AFC21C6E3C25001B37E7 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		844FFCA21C69165C0057C008 /* MADRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MADRequest.h; sourceTree = "<group>"; };
 		844FFCA31C69165C0057C008 /* MADRequest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MADRequest.m; sourceTree = "<group>"; };
 		844FFCA51C69E2A60057C008 /* MADResponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MADResponse.h; sourceTree = "<group>"; };
 		844FFCA61C69E2A60057C008 /* MADResponse.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MADResponse.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFrameworksBuildPhase section */
-		841BEEBB1C68A40E001B28FD /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				8449AFC31C6E3C25001B37E7 /* libz.tbd in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
-
 /* Begin PBXGroup section */
 		841BEEB51C68A40E001B28FD = {
 			isa = PBXGroup;
 			children = (
-				8449AFC21C6E3C25001B37E7 /* libz.tbd */,
 				841BEEC01C68A40E001B28FD /* HttpServer */,
 				841BEEBF1C68A40E001B28FD /* Products */,
 			);
@@ -94,7 +80,6 @@
 			buildConfigurationList = 841BEEC51C68A40E001B28FD /* Build configuration list for PBXNativeTarget "HttpServer" */;
 			buildPhases = (
 				841BEEBA1C68A40E001B28FD /* Sources */,
-				841BEEBB1C68A40E001B28FD /* Frameworks */,
 				841BEEBC1C68A40E001B28FD /* CopyFiles */,
 			);
 			buildRules = (
