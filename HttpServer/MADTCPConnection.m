@@ -105,9 +105,9 @@
 - (void)stream:(NSStream *)aStream handleEvent:(NSStreamEvent)eventCode {
     if (eventCode == NSStreamEventOpenCompleted) {
         if ([aStream isKindOfClass:[NSOutputStream class]]) {
-//            printf("The open outputStream has completed successfully.\n");
+            printf("The open outputStream has completed successfully.\n");
         } else {
-//            printf("The open inputStream has completed successfully.\n");
+            printf("The open inputStream has completed successfully.\n");
         }
     } else if (eventCode == NSStreamEventHasBytesAvailable) {
         if (aStream == _readStream) {            
@@ -134,7 +134,7 @@
         }
     } else if (eventCode == NSStreamEventHasSpaceAvailable) {
         if (aStream == _writeStream) {
-//            NSLog(@"The stream can accept bytes for writing.");
+            NSLog(@"The stream can accept bytes for writing.");
             if (_responseData != nil || _response.responseError == YES) {
                 if (self.headerSent == NO) {
                     [self sendResposeData];

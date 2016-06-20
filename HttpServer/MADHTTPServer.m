@@ -42,8 +42,8 @@ void AcceptCallBack(CFSocketRef socket, CFSocketCallBackType type, CFDataRef add
 }
 
 static void _SignalHandler(int signal) {
-    _running = NO;
     if (signal == SIGINT) {
+        _running = NO; 
         printf("Goodbye, cruel world.\n");
         return;
     }

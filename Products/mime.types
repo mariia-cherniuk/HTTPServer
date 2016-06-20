@@ -1,0 +1,8 @@
+{
+	"html" : "text/html; charset=UTF-8",
+	"css" : "ext/css",
+	"js" : "application/x-javascript",
+	"jpeg" : "image/jpeg",
+	"jpg" : "image/jpeg",
+	"png" : "image/png",
+}
