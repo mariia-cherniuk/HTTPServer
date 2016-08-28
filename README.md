@@ -1,7 +1,7 @@
-# EchoServer
+# EchoServer - HTTP-server implemented in Objective-C.
 
 # Features:
-HTTP-server implementation in objective-c. Responds to GET-requests, on other requests it responds with code "405 Method Not Allowed". If the file, which corresponding to the GET-request, is not found - "404 Not Found".
+ Responds to GET-requests, on other requests it responds with code "405 Method Not Allowed". If the file, which corresponding to the GET-request, is not found - "404 Not Found".
 
 # Development technologies:
 - sys/socket.h
